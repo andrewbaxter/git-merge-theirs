@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Copyright (c) 2022 Andrew Baxter
+#
+# Replace our tree with their tree completely.
+#
+
+. git-sh-setup
+
+# The first parameters up to -- are merge bases; the rest are heads.
+head= remotes= sep_seen=
+for arg
+do
+	case ",$sep_seen,$head,$arg," in
+	*,--,)
+		sep_seen=yes
+		;;
+	,yes,,*)
+		head=$arg
+		;;
+	,yes,*)
+		remotes="$remotes$arg "
+		;;
+	*)
+		;;
+	esac
+done
+
+# Reject if this is an octopus -- theirs can be used with only one remote
+case "$remotes" in
+?*' '?*)
+	gettextln "Error: The theirs merge strategy must have exactly one remote"
+	exit 2 ;;
+*)
+	;;
+esac
+
+exec git read-tree --reset -u $remotes
